@@ -1,0 +1,79 @@
+---
+title: 'TidyTuesday: NFL attendance'
+author: "Barry Grant"
+date: "2/7/2020"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE, message = FALSE)
+library(tidyverse)
+```
+
+## NFL attendence play
+
+Get the data, see: https://github.com/rfordatascience/tidytuesday/blob/master/data/2020/2020-02-04/readme.md
+
+```{r}
+attendance <- readr::read_csv('https://raw.githubusercontent.com/rfordatascience/tidytuesday/master/data/2020/2020-02-04/attendance.csv')
+
+standings <- readr::read_csv('https://raw.githubusercontent.com/rfordatascience/tidytuesday/master/data/2020/2020-02-04/standings.csv')
+
+```
+
+Lets merge these data-sets together.
+Use Cntrl-Shift-M to insert pipe operator...
+
+```{r}
+attendance_joined <- 
+  left_join(attendance, standings, by=c("year","team_name","team"))  
+
+head(attendance_joined)
+```
+
+
+Some EDA...
+
+```{r}
+attendance_joined %>% 
+  filter(!is.na(weekly_attendance)) %>% 
+  ggplot(aes(team_name, weekly_attendance, fill=playoffs)) +
+  geom_boxplot(outlier.alpha = 0.3) +
+  coord_flip() + theme_light()
+
+```
+
+
+Order by attendence perhaps:
+
+```{r}
+attendance_joined %>% 
+  filter(!is.na(weekly_attendance)) %>% 
+  ggplot(aes( fct_reorder(team_name, weekly_attendance), 
+             weekly_attendance, 
+             fill=playoffs)) +
+  geom_boxplot(outlier.alpha = 0.3) +
+  coord_flip() + 
+  theme_light()
+
+```
+
+```{r}
+attendance_joined %>% 
+  distinct(team_name, year, margin_of_victory, playoffs) %>% 
+  ggplot( aes(margin_of_victory, fill=playoffs)) +
+  geom_histogram(position = "identity", alpha=0.6) +
+  theme_bw()
+```
+
+Now lets add some more text
+
+```{r}
+# and some R code
+```
+
+
+
+
+
+
