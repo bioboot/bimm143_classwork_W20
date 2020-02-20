@@ -1,0 +1,171 @@
+---
+title: "Transcriptomics and the analysis of RNA-Seq data"
+output: github_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## Import today's data
+
+The data for this hands-on session comes from a published RNA-seq experiment where airway smooth muscle cells were treated with dexamethasone, a synthetic glucocorticoid steroid with anti-inflammatory effects (Himes et al. 2014).
+
+Glucocorticoids are used, for example, by people with asthma to reduce inflammation of the airways. The anti-inflammatory effects on airway smooth muscle (ASM) cells has been known for some time but the underlying molecular mechanisms are unclear.
+
+```{r}
+counts <- read.csv("airway_scaledcounts (1).csv", stringsAsFactors = FALSE)
+metadata <-  read.csv("airway_metadata.csv", stringsAsFactors = FALSE)
+```
+
+How many genes are we dealing with?
+
+```{r}
+nrow(counts)
+```
+
+We want to calculate the average counts per gene for contorl samples and the for the drug treated samples. We will then compare these values to see if there is a difference overall between control and treated samples for a given gene.
+
+This is our `metadata` info that tells mw where our control and treated samples are (i.e. which columns in `counts`)
+```{r}
+metadata
+```
+
+Now I want to access the control only rows in the metadata 
+```{r}
+control <- metadata[metadata$dex == "control", ]
+control
+#metadata$id[ metadata$dex == "control" ]
+```
+
+Now use the $id of the control data to access the control columns in `counts and calculate the average.
+```{r}
+control.mean <- rowSums( counts[ , control$id] ) / nrow(control)
+names(control.mean) <- counts$ensgene
+```
+
+Now lets do the same for *treated* samples
+```{r}
+treated <- metadata[metadata$dex == "treated",]
+treated.mean <- rowSums(counts[,treated$id]) / nrow(treated)
+```
+
+We will combine our meancount data for bookkeeping purposes.
+```{r}
+meancounts <- data.frame(control.mean, treated.mean)
+head( meancounts )
+```
+
+Lets plot control.mean vs treated.mean
+
+```{r}
+plot(meancounts)
+```
+
+Lets make this plot a log-log plot
+```{r}
+plot(meancounts, log="xy")
+```
+
+We can find candidate differentially expressed genes by looking for genes with a large change between control and dex-treated samples. We usually look at the log2 of the fold change, because this has better mathematical properties.
+
+Here we calculate log2foldchange, add it to our meancounts data.frame
+
+```{r}
+meancounts$log2fc <- log2(meancounts[,"treated.mean"]/meancounts[,"control.mean"])
+head(meancounts)
+```
+
+Remove any gene that has zero average counts.
+
+```{r}
+x <- data.frame(c(1,1,10,0), c(0,1,10,0))
+#x
+#x==0
+ind <-unique( which(x == 0, arr.ind=TRUE)[,"row"] )
+x[-ind,]
+```
+
+
+
+```{r}
+zero.vals <- which(meancounts[,1:2]==0, arr.ind=TRUE)
+
+to.rm <- unique(zero.vals[,1])
+mycounts <- meancounts[-to.rm,]
+head(mycounts)
+```
+
+How many genes do I have left?
+
+```{r}
+nrow(mycounts)
+```
+
+A common threshold used for calling something differentially expressed is a log2(FoldChange) of greater than 2 or less than -2. Let’s filter the dataset both ways to see how many genes are up or down-regulated.
+
+```{r}
+up.ind <- mycounts$log2fc > 2
+down.ind <- mycounts$log2fc < (-2)
+```
+
+```{r}
+sum(up.ind)
+sum(down.ind)
+```
+
+## Do this properly with DESeq2
+
+```{r}
+library(DESeq2)
+
+```
+
+Setup input for DESeq by specifing countdata, metadata and the experiment design (i.e. which comparasions we are intrested in)
+
+```{r}
+dds <- DESeqDataSetFromMatrix(countData=counts, 
+                              colData=metadata, 
+                              design=~dex, 
+                              tidy=TRUE)
+dds
+```
+
+```{r}
+dds <- DESeq(dds)
+```
+
+```{r}
+res <- results(dds)
+```
+
+```{r}
+plot(res$log2FoldChange, res$padj)
+```
+
+```{r}
+plot(res$log2FoldChange, log(res$padj))
+```
+
+Lets plot this the way the rest of the world does!
+```{r}
+plot(res$log2FoldChange, -log(res$padj))
+```
+
+
+```{r}
+mycols <- rep("gray", nrow(res))
+mycols[ res$log2FoldChange > 2 ] <- "blue"
+mycols[ res$log2FoldChange < -2 ] <- "blue"
+
+plot(res$log2FoldChange, -log(res$padj), col=mycols)
+abline(v=c(2,-2), lty=2)
+abline(h=-log(0.05) )
+```
+
+
+
+
+
+
+
