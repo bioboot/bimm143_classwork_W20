@@ -43,4 +43,11 @@ write.pdb(lig, file="1hsg_ligand.pdb")
 lig
 ```
 
+Read docking results
+
+```{r}
+library(bio3d)
+res <- read.pdb("all.pdbqt", multi=TRUE)
+write.pdb(res, "results.pdb")
+```
 
