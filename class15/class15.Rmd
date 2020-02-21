@@ -62,9 +62,45 @@ Lets plot control.mean vs treated.mean
 plot(meancounts)
 ```
 
+Or with ggplot
+
+```{r}
+library(ggplot2)
+ggplot(meancounts, aes(x=control.mean, y=treated.mean)) +
+  geom_point()
+```
+
+```{r}
+ggplot(meancounts, aes(control.mean)) + 
+  geom_density()
+```
+
 Lets make this plot a log-log plot
 ```{r}
 plot(meancounts, log="xy")
+```
+
+```{r}
+ggplot(meancounts, aes(x=control.mean, y=treated.mean)) +
+  geom_point() + 
+  scale_x_log10() + 
+  scale_y_log10() + 
+  annotation_logticks()
+```
+
+```{r}
+ggplot(meancounts, aes(control.mean)) + 
+  geom_density() + 
+  scale_x_log10() +
+  annotation_logticks()
+```
+
+```{r}
+ggplot(meancounts) + 
+  geom_density(aes(control.mean, color="red")) + 
+  geom_density(aes(treated.mean), color="blue") +
+  scale_x_log10() +
+  annotation_logticks()
 ```
 
 We can find candidate differentially expressed genes by looking for genes with a large change between control and dex-treated samples. We usually look at the log2 of the fold change, because this has better mathematical properties.
