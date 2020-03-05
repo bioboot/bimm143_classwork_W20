@@ -7,7 +7,10 @@ output: github_document
 knitr::opts_chunk$set(echo = TRUE)
 ```
 
-Find the live stream of this file at: https://tinyurl.com/class18-bimm143
+During class time find the live stream of this file at: https://tinyurl.com/class18-bimm143
+
+Otherwise find the github tracked version at:
+https://github.com/bioboot/bimm143_classwork_W20/blob/master/class18/class18.Rmd
 
 
 ## Connect to the NCI-GDC database
