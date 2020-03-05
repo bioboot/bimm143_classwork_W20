@@ -1,0 +1,89 @@
+---
+title: "Class 18: Investigating cancer genomics datasets"
+output: github_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+Find the live stream of this file at: https://tinyurl.com/class18-bimm143
+
+
+## Connect to the NCI-GDC database
+
+The NCI-GDC (cancer genomics commons) is a major portal for cancer genomics data.
+
+Here we use the bioconductor package **GenomicDataCommons** to talk to this database and download data etc. all from R.
+
+```{r}
+library(GenomicDataCommons)
+library(TCGAbiolinks)
+library(maftools)
+```
+
+Can we talk to the online database?
+
+```{r}
+status()
+```
+
+## Querying the GDC from R
+
+The pipe operator can be useful in R and sometimes is more clear to read.
+
+```{r}
+c(1:10) %>% mean() 
+```
+
+Query the GDC: How may cases are there for each cancer sequencing project?
+
+```{r}
+cases_by_project <- cases() %>%
+  facet("project.project_id") %>%
+  aggregations()
+head(cases_by_project)
+```
+
+### Plot this overview data
+
+```{r}
+x <- cases_by_project$project.project_id
+
+barplot(x$doc_count, names.arg = x$key, las=2, col="lightblue", log="y")
+```
+
+
+
+## Variant analysis with R
+
+Find files available for PAAD project that we can then examine variants from
+
+```{r}
+maf.file <- GDCquery_Maf(tumor="PAAD", pipelines = "mutect")
+maf.file
+```
+
+
+Read in the MAF file we found and make some plots of varients in this cancer type.
+```{r}
+vars = read.maf(maf = maf.file, verbose = FALSE)
+```
+
+Now make a summary plot of this data
+```{r}
+plotmafSummary(vars)
+```
+
+## Oncoplots
+
+We can make oncoplots for a specific gene too...
+```{r}
+lollipopPlot(vars, gene='TP53')
+```
+
+
+
+
+
+
